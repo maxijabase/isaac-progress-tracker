@@ -907,8 +907,13 @@
 		// function: pull in a steam user's progress data
 		function fetch_steam_user_progress(steamId) {
 			// fetch json data from the steam API server, save to localStorage, and update the progress data
-			const STEAM_API_KEY = "8D0A3BD2153980CBDBDF7A52EDD29BFB";
-			const STEAM_APP_ID = "250900";
+			const STEAM_API_KEY = "<?=htmlentities(STEAM_API_KEY);?>";
+			const STEAM_APP_ID = "<?=htmlentities(STEAM_APP_ID);?>";
+			
+			if(!STEAM_API_KEY) {
+				alert("Missing Steam API key. Please set STEAM_API_KEY in config.sensitive.php.");
+				return;
+			}
 			const STEAM_USER_ID = steamId;
 			
 			fetchJsonp("https://api.steampowered.com/ISteamUserStats/GetUserStatsForGame/v0002/?key="+ STEAM_API_KEY +"&steamid="+ STEAM_USER_ID +"&appid="+ STEAM_APP_ID).then(function(json) {
