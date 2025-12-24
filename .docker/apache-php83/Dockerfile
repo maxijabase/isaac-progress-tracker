@@ -24,7 +24,7 @@ RUN docker-php-ext-install -j$(nproc) gd
 RUN docker-php-ext-install pdo pdo_mysql intl xsl soap zip mbstring curl bcmath xml
 
 # Enable apache modules
-RUN a2enmod rewrite
+RUN a2enmod rewrite deflate
 
 # Set document root
 ENV APACHE_DOCUMENT_ROOT /var/www/html
