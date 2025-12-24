@@ -151,6 +151,12 @@
 				</div>
 				<div class="modal-body">
 					<div class="mb-3">
+						<label for="steam-api-key" class="form-label">Steam API Key</label>
+						<input type="password" class="form-control" id="steam-api-key" name="steam-api-key" required placeholder="Your 32-character API key">
+						<small class="text-muted">Get yours at <a href="https://steamcommunity.com/dev/apikey" rel="noopener noreferrer nofollow" target="_blank">steamcommunity.com/dev/apikey</a> &mdash; stored locally in your browser, never sent to our server.</small>
+					</div>
+					
+					<div class="mb-3">
 						<label for="steam-id" class="form-label">Steam ID</label>
 						<input type="text" class="form-control" id="steam-id" name="steam-id" required placeholder="Example: 12345678901234567">
 					</div>
@@ -185,9 +191,11 @@
 					<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
 				</div>
 				<div class="modal-body">
-					<p>This website uses your browser's local storage functionality to keep track of your Steam ID and Binding of Isaac Steam achievement data. This is automatically stored on your device and is not transmitted to any server.</p>
+					<p>This website uses your browser's local storage functionality to keep track of your Steam API Key, Steam ID, and Binding of Isaac Steam achievement data. This is automatically stored on your device and is not transmitted to any server.</p>
 					
-					<p>To remove your Steam ID or achievement data from your browser, you can remove your Steam ID and progress data at any time by clicking the "Remove Steam ID" button in the "Sync Progress" tool. Additionally, you can clear your browser's local storage to remove all data stored by this website.</p>
+					<p>Your Steam API Key is sent directly to Steam's servers to fetch your achievement data &mdash; it never passes through our servers in a way that we can store or read it.</p>
+					
+					<p>To remove your credentials or achievement data from your browser, you can click the "Remove Steam ID" button in the "Sync Progress" tool. Additionally, you can clear your browser's local storage to remove all data stored by this website.</p>
 				</div>
 				<div class="modal-footer">
 					<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
@@ -213,6 +221,7 @@
 		// application constants
 		const STORAGE_KEY_PROGRESS = "my-progress";
 		const STORAGE_KEY_STEAM_ID = "steam-id";
+		const STORAGE_KEY_API_KEY = "steam-api-key";
 		const STORAGE_KEY_UNLOCKS = "isaac-unlocks";
 		
 		// function: update the progress bar
@@ -872,10 +881,16 @@
 			update_filters();
 		}
 		
-		// event: modal #steam-id-modal opens, attempt to fill the steam id input from localStorage
+		// event: modal #steam-id-modal opens, attempt to fill the inputs from localStorage
 		document.getElementById("steam-id-modal").addEventListener("show.bs.modal", function() {
 			if("undefined" === typeof localStorage) {
 				return;
+			}
+			
+			const apiKey = localStorage.getItem(STORAGE_KEY_API_KEY);
+			
+			if(null !== apiKey) {
+				document.getElementById("steam-api-key").value = apiKey;
 			}
 			
 			const steamId = localStorage.getItem(STORAGE_KEY_STEAM_ID);
@@ -885,41 +900,31 @@
 			}
 		});
 		
-		function fetchJsonp(url) {
-			// Create a unique callback function name
-			const callbackName = 'jsonp_callback_' + Math.round(100000 * Math.random());
-			
-			// Create a Promise that resolves when the callback is called
-			return new Promise((resolve, reject) => {
-				window[callbackName] = function(data) {
-					delete window[callbackName];
-					document.body.removeChild(script);
-					resolve(data);
-				};
-				
-				// Create a <script> tag with the URL including the callback function name
-				const script = document.createElement('script');
-				script.src = url + (url.indexOf('?') >= 0 ? '&' : '?') + 'jsonp=' + callbackName;
-				document.body.appendChild(script);
-			});
-		}
-		
 		// function: pull in a steam user's progress data
-		function fetch_steam_user_progress(steamId) {
-			// fetch json data from the steam API server, save to localStorage, and update the progress data
-			const STEAM_API_KEY = "<?=htmlentities(STEAM_API_KEY);?>";
-			const STEAM_APP_ID = "<?=htmlentities(STEAM_APP_ID);?>";
-			
-			if(!STEAM_API_KEY) {
-				alert("Missing Steam API key. Please set STEAM_API_KEY in config.sensitive.php.");
-				return;
-			}
-			const STEAM_USER_ID = steamId;
-			
-			fetchJsonp("https://api.steampowered.com/ISteamUserStats/GetUserStatsForGame/v0002/?key="+ STEAM_API_KEY +"&steamid="+ STEAM_USER_ID +"&appid="+ STEAM_APP_ID).then(function(json) {
-				try {
+		function fetch_steam_user_progress(apiKey, steamId) {
+			// fetch json data from our server-side proxy (which calls Steam API)
+			fetch("<?=htmlentities(DOCKER_PUBLIC_URI);?>api/steam-progress.php", {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/x-www-form-urlencoded",
+				},
+				body: "apikey=" + encodeURIComponent(apiKey) + "&steamid=" + encodeURIComponent(steamId)
+			})
+				.then(function(response) {
+					if(!response.ok) {
+						return response.json().then(function(errorData) {
+							throw new Error(errorData.error || "Failed to fetch data from Steam API (HTTP " + response.status + ")");
+						});
+					}
+					return response.json();
+				})
+				.then(function(json) {
+					if(json.error) {
+						throw new Error(json.error);
+					}
+					
 					if("undefined" === typeof json.playerstats) {
-						throw new Error("Invalid data from Steam API");
+						throw new Error("Invalid data from Steam API. Make sure your Steam profile is public.");
 					}
 					
 					// save the data to window.my_progress
@@ -932,24 +937,29 @@
 					
 					// update the progress data
 					update_my_progress();
-				} catch(error) {
+				})
+				.catch(function(error) {
 					console.error(error);
 					
 					// show an error message
-					alert("Failed to save progress data, please try again later.");
-				}
-			}).catch(function(error) {
-				console.error(error);
-				
-				// show an error message
-				alert("Failed to fetch data from Steam API, please try again later.");
-			});
+					alert("Failed to fetch data from Steam API: " + error.message);
+				});
 		}
 		
-		// event: form submit, save the steam id input to localStorage
+		// event: form submit, save the inputs to localStorage
 		document.querySelector("form").addEventListener("submit", function(event) {
 			// prevent the form from submitting
 			event.preventDefault();
+			
+			// get the api key from the input
+			let apiKey = document.getElementById("steam-api-key").value.trim();
+			
+			// validate the api key (should be 32 hex characters)
+			if(!/^[A-Fa-f0-9]{32}$/.test(apiKey)) {
+				alert("Invalid Steam API Key. It should be 32 characters (letters A-F and numbers).");
+				
+				return false;
+			}
 			
 			// get the steam id from the input
 			let steamId = document.getElementById("steam-id").value;
@@ -958,9 +968,14 @@
 			steamId = steamId.replace(/[^0-9]/g, "");
 			
 			if(17 !== steamId.length) {
-				alert("Invalid Steam ID");
+				alert("Invalid Steam ID. It should be 17 digits.");
 				
 				return false;
+			}
+			
+			// save the api key to localStorage
+			if("undefined" !== typeof localStorage) {
+				localStorage.setItem(STORAGE_KEY_API_KEY, apiKey);
 			}
 			
 			// save the steam id to localStorage
@@ -976,14 +991,16 @@
 			window.location.hash = steamId;
 			
 			// fetch the steam user's progress data
-			fetch_steam_user_progress(steamId);
+			fetch_steam_user_progress(apiKey, steamId);
 		});
 		
-		// event: button #steam-id-reset click, remove the steam id from localStorage and the input
+		// event: button #steam-id-reset click, remove the credentials from localStorage and the inputs
 		document.getElementById("steam-id-reset").addEventListener("click", function() {
+			document.getElementById("steam-api-key").value = "";
 			document.getElementById("steam-id").value = "";
 			
 			if("undefined" !== typeof localStorage) {
+				localStorage.removeItem(STORAGE_KEY_API_KEY);
 				localStorage.removeItem(STORAGE_KEY_STEAM_ID);
 			}
 			
@@ -1008,15 +1025,19 @@
 		
 		// initialize the app
 		try {
-			// if the hash is the steam user ID, save it to localStorage and fetch the progress data
+			// if the hash is the steam user ID and we have an API key, fetch the progress data
 			if(window.location.hash.match(/^#[0-9]{17}$/)) {
 				const steamId = window.location.hash.substr(1);
+				const apiKey = localStorage.getItem(STORAGE_KEY_API_KEY);
 				
 				if("undefined" !== typeof localStorage) {
 					localStorage.setItem(STORAGE_KEY_STEAM_ID, steamId);
 				}
 				
-				fetch_steam_user_progress(steamId);
+				// only fetch if we have both API key and Steam ID
+				if(apiKey && /^[A-Fa-f0-9]{32}$/.test(apiKey)) {
+					fetch_steam_user_progress(apiKey, steamId);
+				}
 			}
 			
 			load_unlocks_data();
