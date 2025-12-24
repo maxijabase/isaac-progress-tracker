@@ -225,20 +225,26 @@
 			var toastId = 'toast-' + Date.now();
 			
 			// determine colors based on type
-			var bgClass = 'bg-danger';
+			var bgClass = 'bg-danger text-white';
+			var closeClass = 'btn-close-white';
+			var linkClass = 'text-white';
 			var icon = '⚠️';
 			var title = 'Error';
 			
 			if(type === 'success') {
-				bgClass = 'bg-success';
+				bgClass = 'bg-success text-white';
 				icon = '✓';
 				title = 'Success';
 			} else if(type === 'warning') {
 				bgClass = 'bg-warning text-dark';
+				closeClass = '';
+				linkClass = 'text-dark';
 				icon = '⚠';
 				title = 'Warning';
 			} else if(type === 'info') {
 				bgClass = 'bg-info text-dark';
+				closeClass = '';
+				linkClass = 'text-dark';
 				icon = 'ℹ';
 				title = 'Info';
 			}
@@ -246,17 +252,17 @@
 			// build extra content (like links)
 			var extraContent = '';
 			if(options.link) {
-				extraContent = '<div class="mt-2"><a href="' + options.link.url + '" target="_blank" rel="noopener noreferrer" class="text-white">' + options.link.text + '</a></div>';
+				extraContent = '<div class="mt-2"><a href="' + options.link.url + '" target="_blank" rel="noopener noreferrer" class="' + linkClass + '">' + options.link.text + '</a></div>';
 			}
 			
-			var toastHtml = '<div id="' + toastId + '" class="toast ' + bgClass + ' text-white border-0" role="alert" aria-live="assertive" aria-atomic="true">' +
+			var toastHtml = '<div id="' + toastId + '" class="toast ' + bgClass + ' border-0" role="alert" aria-live="assertive" aria-atomic="true">' +
 				'<div class="d-flex">' +
 					'<div class="toast-body">' +
 						'<strong>' + icon + ' ' + title + '</strong><br>' +
 						message +
 						extraContent +
 					'</div>' +
-					'<button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>' +
+					'<button type="button" class="btn-close ' + closeClass + ' me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>' +
 				'</div>' +
 			'</div>';
 			
