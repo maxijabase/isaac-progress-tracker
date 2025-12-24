@@ -39,9 +39,10 @@
 			return array_map('esc_sql', $string);
 		}
 		
-		// @TODO
-		return addslashes($string);
-		//return $GLOBALS['db_instance']->quote($string);
+		// Use PDO's quote method for proper escaping
+		// Strip the surrounding quotes since existing code wraps values in quotes
+		$quoted = $GLOBALS['db_instance']->quote($string);
+		return substr($quoted, 1, -1);
 	}
 	
 	/**
