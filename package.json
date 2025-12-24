@@ -1,25 +1,16 @@
 {
-  "private": true,
-  "type": "module",
-  "scripts": {
-    "————— dev —————": "",
-    "generate-unlocks-json": "podman exec -it isaac-apache-php83-1 php /var/www/html/tools/generate_unlocks_json.php",
-    "————— build —————": "",
-    "build-release": "podman exec -it isaac-apache-php83-1 php /var/www/html/tools/generate_release.php",
-    "publish-release": "aws s3 sync ./src/release/ s3://isaac.pyxol.com/",
-    "————— podman —————": "",
-    "podman-up": "podman compose up -d",
-    "podman-up-dev": "podman compose up",
-    "podman-build": "podman compose build",
-    "podman-restart": "podman compose restart",
-    "podman-stop": "podman compose stop"
-  },
-  "name": "isaac-progress-tracker",
-  "module": "index.ts",
-  "devDependencies": {
-    "@types/bun": "latest"
-  },
-  "peerDependencies": {
-    "typescript": "^5"
-  }
+	"private": true,
+	"scripts": {
+		"————— dev —————": "",
+		"generate-unlocks-json": "podman exec -it isaac-apache-php83-1 php /var/www/html/tools/generate_unlocks_json.php",
+		"————— build —————": "",
+		"build-release": "podman exec -it isaac-apache-php83-1 php /var/www/html/tools/generate_release.php",
+		"publish-release": "aws s3 sync ./src/release/ s3://isaac.pyxol.com/",
+		"————— podman —————": "",
+		"podman-up": "podman compose up -d",
+		"podman-up-dev": "podman compose up",
+		"podman-build": "podman compose build",
+		"podman-restart": "podman compose restart",
+		"podman-stop": "podman compose stop"
+	}
 }
