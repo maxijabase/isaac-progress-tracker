@@ -6,6 +6,10 @@
 	
 	header('Content-Type: application/json');
 	
+	// Cache configuration
+	$cacheDir = '/tmp/steam-cache';
+	$cacheTtl = 300; // 5 minutes
+	
 	// Rate limiting: max 10 requests per minute
 	$rateLimitMax = 10;
 	$rateLimitWindow = 60; // seconds
@@ -53,6 +57,26 @@
 		http_response_code(400);
 		echo json_encode(['error' => 'Invalid Steam ID. It should be 17 digits.']);
 		exit;
+	}
+	
+	// Generate cache key (hash of steamid + apikey for uniqueness)
+	$cacheKey = hash('sha256', $steamId . $apiKey);
+	$cacheFile = $cacheDir . '/' . $cacheKey . '.json';
+	
+	// Check cache first
+	if(file_exists($cacheFile)) {
+		$cacheAge = $now - filemtime($cacheFile);
+		
+		if($cacheAge < $cacheTtl) {
+			// Serve cached response
+			$cachedData = file_get_contents($cacheFile);
+			if($cachedData !== false) {
+				header('X-Cache: HIT');
+				header('X-Cache-Age: ' . $cacheAge);
+				echo $cachedData;
+				exit;
+			}
+		}
 	}
 	
 	// Build the Steam API URL
@@ -130,5 +154,15 @@
 		exit;
 	}
 	
+	// Cache the successful response
+	if(!is_dir($cacheDir)) {
+		@mkdir($cacheDir, 0755, true);
+	}
+	
+	if(is_writable($cacheDir) || @mkdir($cacheDir, 0755, true)) {
+		@file_put_contents($cacheFile, $response);
+	}
+	
 	// Return the Steam API response
+	header('X-Cache: MISS');
 	echo $response;
