@@ -981,6 +981,9 @@
 					// hide loading state
 					setLoadingState(false);
 					
+					// restore the progress text
+					update_my_progress();
+					
 					// show an error message
 					alert("Failed to fetch data from Steam API: " + error.message);
 				});
