@@ -204,6 +204,9 @@
 		</div>
 	</div>
 	
+	<!-- toast container for notifications -->
+	<div class="toast-container position-fixed bottom-0 end-0 p-3" id="toast-container"></div>
+	
 	<script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
 	<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
 	<script src="https://cdn.jsdelivr.net/npm/floatthead@2.2.5/dist/jquery.floatThead.min.js"></script>
@@ -211,6 +214,66 @@
 	<script type="text/javascript">
 		const observer = lozad();
 		observer.observe();
+	</script>
+	<script>
+		// function: show toast notification
+		function showNotification(message, type, options) {
+			type = type || 'error';
+			options = options || {};
+			
+			var toastContainer = document.getElementById('toast-container');
+			var toastId = 'toast-' + Date.now();
+			
+			// determine colors based on type
+			var bgClass = 'bg-danger';
+			var icon = '⚠️';
+			var title = 'Error';
+			
+			if(type === 'success') {
+				bgClass = 'bg-success';
+				icon = '✓';
+				title = 'Success';
+			} else if(type === 'warning') {
+				bgClass = 'bg-warning text-dark';
+				icon = '⚠';
+				title = 'Warning';
+			} else if(type === 'info') {
+				bgClass = 'bg-info text-dark';
+				icon = 'ℹ';
+				title = 'Info';
+			}
+			
+			// build extra content (like links)
+			var extraContent = '';
+			if(options.link) {
+				extraContent = '<div class="mt-2"><a href="' + options.link.url + '" target="_blank" rel="noopener noreferrer" class="text-white">' + options.link.text + '</a></div>';
+			}
+			
+			var toastHtml = '<div id="' + toastId + '" class="toast ' + bgClass + ' text-white border-0" role="alert" aria-live="assertive" aria-atomic="true">' +
+				'<div class="d-flex">' +
+					'<div class="toast-body">' +
+						'<strong>' + icon + ' ' + title + '</strong><br>' +
+						message +
+						extraContent +
+					'</div>' +
+					'<button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>' +
+				'</div>' +
+			'</div>';
+			
+			toastContainer.insertAdjacentHTML('beforeend', toastHtml);
+			
+			var toastElement = document.getElementById(toastId);
+			var toast = new bootstrap.Toast(toastElement, {
+				autohide: type !== 'error',
+				delay: 5000
+			});
+			toast.show();
+			
+			// remove from DOM after hidden
+			toastElement.addEventListener('hidden.bs.toast', function() {
+				toastElement.remove();
+			});
+		}
 	</script>
 	<script>
 		$(() => $('table').floatThead());
@@ -700,13 +763,13 @@
 		// function: ingest the unlocks data
 		function ingest_unlocks_data(data) {
 			if(!data) {
-				alert("Failed to load data, please try again later.");
+				showNotification("Failed to load data, please try again later.", "error");
 				
 				return;
 			}
 			
 			if(!data.unlocks || !data.categories) {
-				alert("Failed to load data, please try again later.");
+				showNotification("Failed to load data, please try again later.", "error");
 				
 				return;
 			}
@@ -842,7 +905,7 @@
 				}).catch(function(error) {
 					console.error(error);
 					
-					alert("Failed to load data, please try again later. (" + error.message + ")");
+					showNotification("Failed to load data: " + error.message, "error");
 				});
 			}
 		}
@@ -984,8 +1047,13 @@
 					// restore the progress text
 					update_my_progress();
 					
-					// show an error message
-					alert("Failed to fetch data from Steam API: " + error.message);
+					// show an error message with Steam status link
+					showNotification("Failed to fetch data from Steam API: " + error.message, "error", {
+						link: {
+							url: "https://steamstat.us/",
+							text: "Check Steam status at steamstat.us →"
+						}
+					});
 				});
 		}
 		
@@ -999,7 +1067,7 @@
 			
 			// validate the api key (should be 32 hex characters)
 			if(!/^[A-Fa-f0-9]{32}$/.test(apiKey)) {
-				alert("Invalid Steam API Key. It should be 32 characters (letters A-F and numbers).");
+				showNotification("Invalid Steam API Key. It should be 32 characters (letters A-F and numbers).", "warning");
 				
 				return false;
 			}
@@ -1011,7 +1079,7 @@
 			steamId = steamId.replace(/[^0-9]/g, "");
 			
 			if(17 !== steamId.length) {
-				alert("Invalid Steam ID. It should be 17 digits.");
+				showNotification("Invalid Steam ID. It should be 17 digits.", "warning");
 				
 				return false;
 			}
@@ -1098,7 +1166,7 @@
 		} catch(error) {
 			console.error(error);
 			
-			alert("Failed to load data, please try again later. (" + error.message + ")");
+			showNotification("Failed to load data: " + error.message, "error");
 		}
 	</script>
 </body>
