@@ -224,6 +224,37 @@
 		const STORAGE_KEY_API_KEY = "steam-api-key";
 		const STORAGE_KEY_UNLOCKS = "isaac-unlocks";
 		
+		// function: set loading state for Steam API sync
+		function setLoadingState(isLoading) {
+			const submitBtn = document.querySelector('#steam-id-modal button[type="submit"]');
+			const progressTexts = document.querySelectorAll('.unlock_progress_text');
+			const apiKeyInput = document.getElementById('steam-api-key');
+			const steamIdInput = document.getElementById('steam-id');
+			
+			if(isLoading) {
+				// disable inputs and button
+				if(submitBtn) {
+					submitBtn.disabled = true;
+					submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>Syncing...';
+				}
+				if(apiKeyInput) apiKeyInput.disabled = true;
+				if(steamIdInput) steamIdInput.disabled = true;
+				
+				// update progress text
+				progressTexts.forEach(function(el) {
+					el.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>Syncing with Steam...';
+				});
+			} else {
+				// re-enable inputs and button
+				if(submitBtn) {
+					submitBtn.disabled = false;
+					submitBtn.textContent = 'Update';
+				}
+				if(apiKeyInput) apiKeyInput.disabled = false;
+				if(steamIdInput) steamIdInput.disabled = false;
+			}
+		}
+		
 		// function: update the progress bar
 		function update_loading_bar_percent(value) {
 			let progress_value_el = document.getElementById("unlocks_table_progress_value");
@@ -902,6 +933,9 @@
 		
 		// function: pull in a steam user's progress data
 		function fetch_steam_user_progress(apiKey, steamId) {
+			// show loading state
+			setLoadingState(true);
+			
 			// fetch json data from our server-side proxy (which calls Steam API)
 			fetch("<?=htmlentities(DOCKER_PUBLIC_URI);?>api/steam-progress.php", {
 				method: "POST",
@@ -937,9 +971,15 @@
 					
 					// update the progress data
 					update_my_progress();
+					
+					// hide loading state
+					setLoadingState(false);
 				})
 				.catch(function(error) {
 					console.error(error);
+					
+					// hide loading state
+					setLoadingState(false);
 					
 					// show an error message
 					alert("Failed to fetch data from Steam API: " + error.message);
