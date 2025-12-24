@@ -1,7 +1,39 @@
 <?php
 	require_once(__DIR__ . "/../../config.php");
 	
+	// Start session for rate limiting
+	session_start();
+	
 	header('Content-Type: application/json');
+	
+	// Rate limiting: max 10 requests per minute
+	$rateLimitMax = 10;
+	$rateLimitWindow = 60; // seconds
+	
+	// Initialize rate limit tracking
+	if(!isset($_SESSION['rate_limit_requests'])) {
+		$_SESSION['rate_limit_requests'] = [];
+	}
+	
+	// Clean up old requests outside the window
+	$now = time();
+	$_SESSION['rate_limit_requests'] = array_filter($_SESSION['rate_limit_requests'], function($timestamp) use ($now, $rateLimitWindow) {
+		return ($now - $timestamp) < $rateLimitWindow;
+	});
+	
+	// Check if rate limit exceeded
+	if(count($_SESSION['rate_limit_requests']) >= $rateLimitMax) {
+		$oldestRequest = min($_SESSION['rate_limit_requests']);
+		$retryAfter = $rateLimitWindow - ($now - $oldestRequest);
+		
+		http_response_code(429);
+		header('Retry-After: ' . $retryAfter);
+		echo json_encode(['error' => 'Too many requests. Please wait ' . $retryAfter . ' seconds before trying again.']);
+		exit;
+	}
+	
+	// Record this request
+	$_SESSION['rate_limit_requests'][] = $now;
 	
 	// Get API key from POST request
 	$apiKey = $_POST['apikey'] ?? '';
