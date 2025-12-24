@@ -43,15 +43,58 @@
 	$curlError = curl_error($ch);
 	curl_close($ch);
 	
+	// Handle cURL errors
 	if($curlError) {
 		http_response_code(500);
-		echo json_encode(['error' => 'Failed to connect to Steam API: ' . $curlError]);
+		echo json_encode(['error' => 'Failed to connect to Steam API. Please try again later.']);
+		exit;
+	}
+	
+	// Handle Steam API HTTP errors with friendly messages
+	if($httpCode === 401) {
+		http_response_code(401);
+		echo json_encode(['error' => 'Invalid Steam API Key. Please check your key at steamcommunity.com/dev/apikey']);
+		exit;
+	}
+	
+	if($httpCode === 403) {
+		http_response_code(403);
+		echo json_encode(['error' => 'Access denied. Make sure your Steam profile and game details are set to public.']);
+		exit;
+	}
+	
+	if($httpCode === 500) {
+		http_response_code(500);
+		echo json_encode(['error' => 'Steam API is currently unavailable. Please try again later.']);
 		exit;
 	}
 	
 	if($httpCode !== 200) {
 		http_response_code($httpCode);
-		echo json_encode(['error' => 'Steam API returned an error', 'status' => $httpCode]);
+		echo json_encode(['error' => 'Steam API returned an unexpected error (HTTP ' . $httpCode . '). Please try again later.']);
+		exit;
+	}
+	
+	// Try to decode the response
+	$data = json_decode($response, true);
+	
+	if(json_last_error() !== JSON_ERROR_NONE) {
+		http_response_code(500);
+		echo json_encode(['error' => 'Failed to parse Steam API response. Please try again later.']);
+		exit;
+	}
+	
+	// Check for empty or invalid response
+	if(empty($data) || !isset($data['playerstats'])) {
+		http_response_code(404);
+		echo json_encode(['error' => 'No achievement data found. This could mean: the Steam ID is invalid, the profile is private, or the game is not owned.']);
+		exit;
+	}
+	
+	// Check if achievements exist
+	if(!isset($data['playerstats']['achievements']) || empty($data['playerstats']['achievements'])) {
+		http_response_code(404);
+		echo json_encode(['error' => 'No achievements found for this game. Make sure you own The Binding of Isaac: Rebirth and have played it at least once.']);
 		exit;
 	}
 	
