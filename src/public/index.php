@@ -34,7 +34,14 @@
 			
 			<span class="navbar-text ms-auto me-3 small d-none d-md-inline-block unlock_progress_text">Loading...</span>
 			
-			<ul class="navbar-nav d-flex flex-row">
+			<ul class="navbar-nav d-flex flex-row align-items-center">
+				<li class="nav-item me-3 d-none" id="view-toggle-container">
+					<div class="form-check form-switch mb-0">
+						<input class="form-check-input" type="checkbox" role="switch" id="view-toggle" checked>
+						<label class="form-check-label small text-nowrap" for="view-toggle" id="view-toggle-label">My Progress</label>
+					</div>
+				</li>
+				
 				<li class="nav-item d-md-none">
 					<a class="btn btn-primary" href="#" data-bs-toggle="modal" data-bs-target="#steam-id-modal">Sync</a>
 				</li>
@@ -173,10 +180,8 @@
 						<small class="text-muted">If you're having issues syncing your unlocks, make sure your profile is <a href="https://help.steampowered.com/en/faqs/view/588C-C67D-0251-C276" rel="noopener noreferrer nofollow" target="_blank">set to public</a>.</small>
 					</div>
 				</div>
-				<div class="modal-footer d-flex flex-row justify-content-between">
+				<div class="modal-footer">
 					<button type="submit" class="btn btn-primary">Update</button>
-					
-					<button type="button" class="btn btn-secondary" id="steam-id-reset" data-bs-dismiss="modal">Remove Steam ID</button>
 				</div>
 			</form>
 		</div>
@@ -195,7 +200,7 @@
 					
 					<p>Your Steam API Key is sent directly to Steam's servers to fetch your achievement data &mdash; it never passes through our servers in a way that we can store or read it.</p>
 					
-					<p>To remove your credentials or achievement data from your browser, you can click the "Remove Steam ID" button in the "Sync Progress" tool. Additionally, you can clear your browser's local storage to remove all data stored by this website.</p>
+					<p>To remove your credentials or achievement data from your browser, you can clear your browser's local storage to remove all data stored by this website.</p>
 				</div>
 				<div class="modal-footer">
 					<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
@@ -926,18 +931,41 @@
 			});
 		}
 		
+		// function: check if we have valid progress data
+		function hasProgressData() {
+			return ("undefined" !== typeof window.my_progress) && 
+			       ("undefined" !== typeof window.my_progress.playerstats) && 
+			       ("undefined" !== typeof window.my_progress.playerstats.achievements);
+		}
+		
+		// function: get current view mode (true = my progress only, false = all achievements)
+		function getViewMode() {
+			return document.getElementById("view-toggle").checked;
+		}
+		
 		// function: update the progress data based on the user's achievements
 		function update_my_progress() {
 			let num_unlocks = 0;
 			let num_unlocked = 0;
 			let num_remaining = 0;
 			
+			const showMyProgressOnly = getViewMode();
+			const hasProgress = hasProgressData();
+			
+			// show/hide the view toggle based on whether we have progress data
+			const toggleContainer = document.getElementById("view-toggle-container");
+			if(hasProgress) {
+				toggleContainer.classList.remove("d-none");
+			} else {
+				toggleContainer.classList.add("d-none");
+			}
+			
 			document.querySelectorAll("#unlocks_table tbody tr").forEach(function(row) {
 				const id = row.getAttribute("data-id");
 				
 				num_unlocks++;
 				
-				if(("undefined" === typeof window.my_progress) || ("undefined" === typeof window.my_progress.playerstats) || ("undefined" === typeof window.my_progress.playerstats.achievements)) {
+				if(!hasProgress) {
 					row.style.display = "";
 					row.classList.remove("unlock-complete");
 					row.classList.add("unlock-incomplete");
@@ -950,9 +978,12 @@
 				});
 				
 				if(("undefined" !== typeof achievement) && (achievement.achieved === 1)) {
-					row.style.display = "none";
+					// achievement is completed
 					row.classList.remove("unlock-incomplete");
 					row.classList.add("unlock-complete");
+					
+					// hide if showing "my progress" only, show if showing all
+					row.style.display = showMyProgressOnly ? "none" : "";
 					
 					num_unlocked++;
 				} else {
@@ -980,6 +1011,13 @@
 			// update the filters with the current state of the table
 			update_filters();
 		}
+		
+		// event: view toggle change
+		document.getElementById("view-toggle").addEventListener("change", function() {
+			const label = document.getElementById("view-toggle-label");
+			label.textContent = this.checked ? "My Progress" : "All Achievements";
+			update_my_progress();
+		});
 		
 		// event: modal #steam-id-modal opens, attempt to fill the inputs from localStorage
 		document.getElementById("steam-id-modal").addEventListener("show.bs.modal", function() {
@@ -1111,34 +1149,6 @@
 			fetch_steam_user_progress(apiKey, steamId);
 		});
 		
-		// event: button #steam-id-reset click, remove the credentials from localStorage and the inputs
-		document.getElementById("steam-id-reset").addEventListener("click", function() {
-			document.getElementById("steam-api-key").value = "";
-			document.getElementById("steam-id").value = "";
-			
-			if("undefined" !== typeof localStorage) {
-				localStorage.removeItem(STORAGE_KEY_API_KEY);
-				localStorage.removeItem(STORAGE_KEY_STEAM_ID);
-			}
-			
-			window.setTimeout(function() {
-				// clear the progress data
-				window.my_progress = {};
-				
-				// clear the progress data from localStorage (if available)
-				if("undefined" !== typeof localStorage) {
-					localStorage.removeItem(STORAGE_KEY_PROGRESS);
-				}
-				
-				// if steam id is in the URL, remove it
-				if(window.location.hash.match(/^#[0-9]{17}$/)) {
-					window.location.hash = "";
-				}
-				
-				// update the progress data
-				update_my_progress();
-			}, 500);
-		});
 		
 		// initialize the app
 		try {
