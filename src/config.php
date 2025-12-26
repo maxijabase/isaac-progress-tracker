@@ -9,8 +9,7 @@
 	
 	// uris
 	define('DEV_PUBLIC_URI', 'http://localhost/');
-	define('DOCKER_PUBLIC_URI', 'http://localhost:8080/');
-	define('RELEASE_URI', 'https://isaac.pyxol.com/');
+	define('DOCKER_PUBLIC_URI', (getenv("PUBLIC_URI") ? getenv("PUBLIC_URI") : 'http://localhost:8080/'));
 	
 	// database
 	define('DB_HOST', (getenv("DB_HOST")?getenv("DB_HOST"):''));

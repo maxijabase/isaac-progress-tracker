@@ -14,3 +14,4 @@ src/config.sensitive.php
 
 # Release builds
 src/release/
+*.ps1
