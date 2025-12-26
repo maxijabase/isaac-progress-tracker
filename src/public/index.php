@@ -344,8 +344,10 @@
 		function update_characters_filter() {
 			// count the number of unlocks per character, update the character filter
 			const characterCounts = {};
+			const showMyProgressOnly = getViewMode();
+			const selector = showMyProgressOnly ? "#unlocks_table tbody tr.unlock-incomplete" : "#unlocks_table tbody tr";
 			
-			document.querySelectorAll("#unlocks_table tbody tr.unlock-incomplete").forEach(function(row) {
+			document.querySelectorAll(selector).forEach(function(row) {
 				const character = row.getAttribute("data-character");
 				
 				if(undefined === characterCounts[character]) {
@@ -376,8 +378,10 @@
 		function update_bosses_filter() {
 			// count the number of unlocks per boss, update the boss filter
 			const bossCounts = {};
+			const showMyProgressOnly = getViewMode();
+			const selector = showMyProgressOnly ? "#unlocks_table tbody tr.unlock-incomplete" : "#unlocks_table tbody tr";
 			
-			document.querySelectorAll("#unlocks_table tbody tr.unlock-incomplete").forEach(function(row) {
+			document.querySelectorAll(selector).forEach(function(row) {
 				const boss = row.getAttribute("data-boss");
 				
 				if(undefined === bossCounts[boss]) {
@@ -408,13 +412,11 @@
 		function update_category_filter() {
 			// count the number of unlocks per category, update the category filter
 			const categoryCounts = {};
+			const showMyProgressOnly = getViewMode();
+			const selector = showMyProgressOnly ? "#unlocks_table tbody tr.unlock-incomplete" : "#unlocks_table tbody tr";
 			
-			document.querySelectorAll("#unlocks_table tbody tr.unlock-incomplete").forEach(function(row) {
+			document.querySelectorAll(selector).forEach(function(row) {
 				const category = row.getAttribute("data-category-id");
-				
-				if("5" == category) {
-					console.log(row);
-				}
 				
 				if(undefined === categoryCounts[category]) {
 					categoryCounts[category] = 0;
