@@ -473,9 +473,16 @@
 			
 			// sanitize the search query
 			const search = this.value.toLowerCase();
+			const showMyProgressOnly = getViewMode();
 			
 			// filter the table rows
-			document.querySelectorAll("#unlocks_table tbody tr.unlock-incomplete").forEach(function(row) {
+			document.querySelectorAll("#unlocks_table tbody tr").forEach(function(row) {
+				// if in "My Progress" mode, keep completed achievements hidden
+				if(showMyProgressOnly && row.classList.contains("unlock-complete")) {
+					row.style.display = "none";
+					return;
+				}
+				
 				// search unlock name
 				let search_text = row.getAttribute('data-search-data') || '';
 				
@@ -491,15 +498,21 @@
 		document.getElementById("table-filter").addEventListener("change", function() {
 			const filter = this.selectedOptions[0].getAttribute("data-filter") || '';
 			const value = this.value;
+			const showMyProgressOnly = getViewMode();
 			
-			document.querySelectorAll("#unlocks_table tbody tr.unlock-incomplete").forEach(function(row) {
+			document.querySelectorAll("#unlocks_table tbody tr").forEach(function(row) {
+				// if in "My Progress" mode, keep completed achievements hidden
+				if(showMyProgressOnly && row.classList.contains("unlock-complete")) {
+					row.style.display = "none";
+					return;
+				}
+				
 				if(('' === value) || ('' === filter)) {
 					row.style.display = "";
 				} else {
 					let rowValue = row.getAttribute("data-"+ filter) || '';
 					
 					if(row.getAttribute("data-"+ filter) == value) {
-						console.log(rowValue +" == "+ value);
 						row.style.display = "";
 					} else {
 						row.style.display = "none";
@@ -517,7 +530,7 @@
 			const sort = this.value;
 			
 			const tbody = document.querySelector("#unlocks_table tbody");
-			const rows = Array.from(tbody.querySelectorAll("tr.unlock-incomplete"));
+			const rows = Array.from(tbody.querySelectorAll("tr"));
 			
 			rows.sort(function(a, b) {
 				if("percentage" === sort) {
@@ -566,9 +579,8 @@
 			document.getElementById("table-filter").value = "";
 			document.getElementById("table-sort").value = "percentage";
 			
-			document.querySelectorAll("#unlocks_table tbody tr.unlock-incomplete").forEach(function(row) {
-				row.style.display = "";
-			});
+			// reset visibility based on current view mode
+			update_my_progress();
 			
 			document.getElementById("table-sort").dispatchEvent(new Event("change"));
 		});
