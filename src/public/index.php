@@ -8,16 +8,16 @@
 	<title>Binding of Isaac Unlock Progress Tracker</title>
 	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
 	
-	<link rel="apple-touch-icon" sizes="180x180" href="<?=htmlentities(DOCKER_PUBLIC_URI ."apple-touch-icon.png");?>">
-	<link rel="icon" type="image/png" sizes="32x32" href="<?=htmlentities(DOCKER_PUBLIC_URI ."favicon-32x32.png");?>">
-	<link rel="icon" type="image/png" sizes="16x16" href="<?=htmlentities(DOCKER_PUBLIC_URI ."favicon-16x16.png");?>">
-	<link rel="manifest" href="<?=htmlentities(DOCKER_PUBLIC_URI ."site.webmanifest");?>">
+	<link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png">
+	<link rel="icon" type="image/png" sizes="32x32" href="./favicon-32x32.png">
+	<link rel="icon" type="image/png" sizes="16x16" href="./favicon-16x16.png">
+	<link rel="manifest" href="./site.webmanifest">
 </head>
 <body data-bs-theme="dark">
 	<nav class="navbar navbar-expand-lg bg-black">
 		<div class="container-fluid">
 			<div class="d-flex flex-row align-items-center">
-				<a href="<?=htmlentities(DOCKER_PUBLIC_URI);?>" class="navbar-brand fw-bold">Isaac Tracker</a>
+				<a href="./" class="navbar-brand fw-bold">Isaac Tracker</a>
 				
 				<div class="nav-item ms-2">
 					<a href="#" class="nav-link d-md-none" data-bs-toggle="modal" data-bs-target="#info-modal">
@@ -910,7 +910,7 @@
 				update_loading_bar_percent(10);
 				
 				// load in the unlocks data from the server
-				fetch("<?=htmlentities(DOCKER_PUBLIC_URI);?>unlocks.json").then(function(response) {
+				fetch("./unlocks.json").then(function(response) {
 					if(!response.ok) {
 						throw new Error("Failed to fetch data from server");
 					}
@@ -1058,7 +1058,7 @@
 			setLoadingState(true);
 			
 			// fetch json data from our server-side proxy (which calls Steam API)
-			fetch("<?=htmlentities(DOCKER_PUBLIC_URI);?>api/steam-progress.php", {
+			fetch("./api/steam-progress.php", {
 				method: "POST",
 				headers: {
 					"Content-Type": "application/x-www-form-urlencoded",

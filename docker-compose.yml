@@ -5,8 +5,6 @@ services:
     restart: unless-stopped
     ports:
       - "3020:80"
-    environment:
-      - PUBLIC_URI=https://isaac.maxijabase.dev/
     volumes:
       - isaac-cache:/tmp/steam-cache
 
