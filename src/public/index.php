@@ -158,22 +158,13 @@
 				</div>
 				<div class="modal-body">
 					<div class="mb-3">
-						<label for="steam-api-key" class="form-label">Steam API Key</label>
-						<input type="password" class="form-control" id="steam-api-key" name="steam-api-key" required placeholder="Your 32-character API key">
-						<small class="text-muted">Get yours at <a href="https://steamcommunity.com/dev/apikey" rel="noopener noreferrer nofollow" target="_blank">steamcommunity.com/dev/apikey</a> &mdash; stored locally in your browser, never sent to our server.</small>
-					</div>
-					
-					<div class="mb-3">
 						<label for="steam-id" class="form-label">Steam ID</label>
 						<input type="text" class="form-control" id="steam-id" name="steam-id" required placeholder="Example: 12345678901234567">
+						<small class="text-muted">You can find your Steam ID by using <a href="https://www.steamidfinder.com/" rel="noopener noreferrer nofollow" target="_blank">SteamID Finder</a>. You're looking for the <strong>"steamID64 (Dec)"</strong> number, it should be 17 characters long.</small>
 					</div>
 					
 					<div class="mt-3">
 						<small class="text-muted">This automated progress tracker only works with the Steam version of <a href="https://store.steampowered.com/app/250900/" rel="noopener noreferrer nofollow" target="_blank">The Binding of Isaac: Rebirth</a>.</small>
-					</div>
-					
-					<div class="mt-3">
-						<small class="text-muted">You can find your Steam ID by using <a href="https://www.steamidfinder.com/" rel="noopener noreferrer nofollow" target="_blank">SteamID Finder</a>. You're looking for the <strong>"steamID64 (Dec)"</strong> number, it should be 17 characters long.</small>
 					</div>
 					
 					<div class="mt-3">
@@ -196,11 +187,11 @@
 					<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
 				</div>
 				<div class="modal-body">
-					<p>This website uses your browser's local storage functionality to keep track of your Steam API Key, Steam ID, and Binding of Isaac Steam achievement data. This is automatically stored on your device and is not transmitted to any server.</p>
+					<p>This website uses your browser's local storage functionality to keep track of your Steam ID and Binding of Isaac Steam achievement data. This is automatically stored on your device.</p>
 					
-					<p>Your Steam API Key is sent directly to Steam's servers to fetch your achievement data &mdash; it never passes through our servers in a way that we can store or read it.</p>
+					<p>When you sync your progress, your Steam ID is sent to our server which fetches your public achievement data from Steam's API.</p>
 					
-					<p>To remove your credentials or achievement data from your browser, you can clear your browser's local storage to remove all data stored by this website.</p>
+					<p>To remove your data from your browser, you can clear your browser's local storage to remove all data stored by this website.</p>
 				</div>
 				<div class="modal-footer">
 					<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
@@ -295,14 +286,14 @@
 		// application constants
 		const STORAGE_KEY_PROGRESS = "my-progress";
 		const STORAGE_KEY_STEAM_ID = "steam-id";
-		const STORAGE_KEY_API_KEY = "steam-api-key";
 		const STORAGE_KEY_UNLOCKS = "isaac-unlocks";
+		const STORAGE_KEY_DATA_VERSION = "isaac-data-version";
+		const CURRENT_DATA_VERSION = "2026-01-02-v4"; // Update this when unlocks.json changes
 		
 		// function: set loading state for Steam API sync
 		function setLoadingState(isLoading) {
 			const submitBtn = document.querySelector('#steam-id-modal button[type="submit"]');
 			const progressTexts = document.querySelectorAll('.unlock_progress_text');
-			const apiKeyInput = document.getElementById('steam-api-key');
 			const steamIdInput = document.getElementById('steam-id');
 			
 			if(isLoading) {
@@ -311,7 +302,6 @@
 					submitBtn.disabled = true;
 					submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>Syncing...';
 				}
-				if(apiKeyInput) apiKeyInput.disabled = true;
 				if(steamIdInput) steamIdInput.disabled = true;
 				
 				// update progress text
@@ -324,7 +314,6 @@
 					submitBtn.disabled = false;
 					submitBtn.textContent = 'Update';
 				}
-				if(apiKeyInput) apiKeyInput.disabled = false;
 				if(steamIdInput) steamIdInput.disabled = false;
 			}
 		}
@@ -894,6 +883,13 @@
 					throw new Error("localStorage is not available");
 				}
 				
+				// Check if cached data version matches current version
+				const cachedVersion = localStorage.getItem(STORAGE_KEY_DATA_VERSION);
+				if(cachedVersion !== CURRENT_DATA_VERSION) {
+					// Clear old cached data if version mismatch
+					localStorage.removeItem(STORAGE_KEY_UNLOCKS);
+				}
+				
 				// first attempt to load the unlocks data from localStorage
 				const unlocksData = localStorage.getItem(STORAGE_KEY_UNLOCKS);
 				
@@ -909,8 +905,8 @@
 			} catch(error) {
 				update_loading_bar_percent(10);
 				
-				// load in the unlocks data from the server
-				fetch("./unlocks.json").then(function(response) {
+				// load in the unlocks data from the server (with cache-busting)
+				fetch("./unlocks.json?v=" + CURRENT_DATA_VERSION).then(function(response) {
 					if(!response.ok) {
 						throw new Error("Failed to fetch data from server");
 					}
@@ -923,6 +919,8 @@
 					if("undefined" !== typeof localStorage) {
 						// save the data to localStorage
 						localStorage.setItem(STORAGE_KEY_UNLOCKS, JSON.stringify(json));
+						// save the current data version
+						localStorage.setItem(STORAGE_KEY_DATA_VERSION, CURRENT_DATA_VERSION);
 					}
 					
 					// ingest the data
@@ -1039,12 +1037,6 @@
 				return;
 			}
 			
-			const apiKey = localStorage.getItem(STORAGE_KEY_API_KEY);
-			
-			if(null !== apiKey) {
-				document.getElementById("steam-api-key").value = apiKey;
-			}
-			
 			const steamId = localStorage.getItem(STORAGE_KEY_STEAM_ID);
 			
 			if(null !== steamId) {
@@ -1053,7 +1045,7 @@
 		});
 		
 		// function: pull in a steam user's progress data
-		function fetch_steam_user_progress(apiKey, steamId) {
+		function fetch_steam_user_progress(steamId) {
 			// show loading state
 			setLoadingState(true);
 			
@@ -1063,7 +1055,7 @@
 				headers: {
 					"Content-Type": "application/x-www-form-urlencoded",
 				},
-				body: "apikey=" + encodeURIComponent(apiKey) + "&steamid=" + encodeURIComponent(steamId)
+				body: "steamid=" + encodeURIComponent(steamId)
 			})
 				.then(function(response) {
 					if(!response.ok) {
@@ -1120,16 +1112,6 @@
 			// prevent the form from submitting
 			event.preventDefault();
 			
-			// get the api key from the input
-			let apiKey = document.getElementById("steam-api-key").value.trim();
-			
-			// validate the api key (should be 32 hex characters)
-			if(!/^[A-Fa-f0-9]{32}$/.test(apiKey)) {
-				showNotification("Invalid Steam API Key. It should be 32 characters (letters A-F and numbers).", "warning");
-				
-				return false;
-			}
-			
 			// get the steam id from the input
 			let steamId = document.getElementById("steam-id").value;
 			
@@ -1140,11 +1122,6 @@
 				showNotification("Invalid Steam ID. It should be 17 digits.", "warning");
 				
 				return false;
-			}
-			
-			// save the api key to localStorage
-			if("undefined" !== typeof localStorage) {
-				localStorage.setItem(STORAGE_KEY_API_KEY, apiKey);
 			}
 			
 			// save the steam id to localStorage
@@ -1160,25 +1137,22 @@
 			window.location.hash = steamId;
 			
 			// fetch the steam user's progress data
-			fetch_steam_user_progress(apiKey, steamId);
+			fetch_steam_user_progress(steamId);
 		});
 		
 		
 		// initialize the app
 		try {
-			// if the hash is the steam user ID and we have an API key, fetch the progress data
+			// if the hash is the steam user ID, fetch the progress data
 			if(window.location.hash.match(/^#[0-9]{17}$/)) {
 				const steamId = window.location.hash.substr(1);
-				const apiKey = localStorage.getItem(STORAGE_KEY_API_KEY);
 				
 				if("undefined" !== typeof localStorage) {
 					localStorage.setItem(STORAGE_KEY_STEAM_ID, steamId);
 				}
 				
-				// only fetch if we have both API key and Steam ID
-				if(apiKey && /^[A-Fa-f0-9]{32}$/.test(apiKey)) {
-					fetch_steam_user_progress(apiKey, steamId);
-				}
+				// fetch the progress data
+				fetch_steam_user_progress(steamId);
 			}
 			
 			load_unlocks_data();

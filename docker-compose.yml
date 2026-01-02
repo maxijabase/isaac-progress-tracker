@@ -5,8 +5,12 @@ services:
     restart: unless-stopped
     ports:
       - "3020:80"
+    environment:
+      - STEAM_API_KEY=${STEAM_API_KEY}
     volumes:
       - isaac-cache:/tmp/steam-cache
+      - isaac-ratelimit:/tmp/steam-ratelimit
 
 volumes:
   isaac-cache:
+  isaac-ratelimit:

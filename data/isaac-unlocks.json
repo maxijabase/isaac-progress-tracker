@@ -5841,4 +5841,40 @@
     "icon": "https://steamcdn-a.akamaihd.net/steamcommunity/public/images/apps/250900/e729764beb8aa856567d16825604f9407bd8c362.jpg",
     "icongray": "https://steamcdn-a.akamaihd.net/steamcommunity/public/images/apps/250900/29349d3d65a5b203402972074862b4b182484b5d.jpg",
     "category": 20
+}, {
+    "name": "638",
+    "defaultvalue": 0,
+    "displayName": "Play Online",
+    "hidden": 0,
+    "description": "Played Online",
+    "icon": "https://shared.fastly.steamstatic.com/community_assets/images/apps/250900/da5264ee0d316ad91646889f84287a04a9bf7640.jpg",
+    "icongray": "https://steamcdn-a.akamaihd.net/steamcommunity/public/images/apps/250900/29349d3d65a5b203402972074862b4b182484b5d.jpg",
+    "category": 20
+}, {
+    "name": "639",
+    "defaultvalue": 0,
+    "displayName": "Win Online",
+    "hidden": 0,
+    "description": "Won Online",
+    "icon": "https://shared.fastly.steamstatic.com/community_assets/images/apps/250900/fbceae940d5c2de42f31938c166c4a11d26fbaf6.jpg",
+    "icongray": "https://steamcdn-a.akamaihd.net/steamcommunity/public/images/apps/250900/29349d3d65a5b203402972074862b4b182484b5d.jpg",
+    "category": 20
+}, {
+    "name": "640",
+    "defaultvalue": 0,
+    "displayName": "Win Online Daily",
+    "hidden": 0,
+    "description": "Won Online Daily",
+    "icon": "https://shared.fastly.steamstatic.com/community_assets/images/apps/250900/90f01f8e38174ad4eaf1e74e69450edba4b610a4.jpg",
+    "icongray": "https://steamcdn-a.akamaihd.net/steamcommunity/public/images/apps/250900/29349d3d65a5b203402972074862b4b182484b5d.jpg",
+    "category": 20
+}, {
+    "name": "641",
+    "defaultvalue": 0,
+    "displayName": "Item Descriptions",
+    "hidden": 0,
+    "description": "Read Up!",
+    "icon": "https://shared.fastly.steamstatic.com/community_assets/images/apps/250900/285579eddf1dd9c100eb0469cfab62fc9b65c40a.jpg",
+    "icongray": "https://steamcdn-a.akamaihd.net/steamcommunity/public/images/apps/250900/29349d3d65a5b203402972074862b4b182484b5d.jpg",
+    "category": 20
 }]

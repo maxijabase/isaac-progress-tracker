@@ -1,53 +1,95 @@
 <?php
 	require_once(__DIR__ . "/../../config.php");
 	
-	// Start session for rate limiting
-	session_start();
-	
 	header('Content-Type: application/json');
+	
+	// Check if host has configured an API key
+	if(empty(STEAM_API_KEY)) {
+		http_response_code(503);
+		echo json_encode(['error' => 'Steam API key not configured by the host.']);
+		exit;
+	}
 	
 	// Cache configuration
 	$cacheDir = '/tmp/steam-cache';
 	$cacheTtl = 300; // 5 minutes
 	
-	// Rate limiting: max 10 requests per minute
-	$rateLimitMax = 10;
+	// Rate limiting configuration (IP-based, stored in files)
+	$rateLimitDir = '/tmp/steam-ratelimit';
+	$rateLimitMax = 10; // max requests per window
 	$rateLimitWindow = 60; // seconds
 	
-	// Initialize rate limit tracking
-	if(!isset($_SESSION['rate_limit_requests'])) {
-		$_SESSION['rate_limit_requests'] = [];
-	}
-	
-	// Clean up old requests outside the window
-	$now = time();
-	$_SESSION['rate_limit_requests'] = array_filter($_SESSION['rate_limit_requests'], function($timestamp) use ($now, $rateLimitWindow) {
-		return ($now - $timestamp) < $rateLimitWindow;
-	});
-	
-	// Check if rate limit exceeded
-	if(count($_SESSION['rate_limit_requests']) >= $rateLimitMax) {
-		$oldestRequest = min($_SESSION['rate_limit_requests']);
-		$retryAfter = $rateLimitWindow - ($now - $oldestRequest);
+	// Get client IP (handle proxies)
+	function getClientIp(): string {
+		$headers = ['HTTP_CF_CONNECTING_IP', 'HTTP_X_FORWARDED_FOR', 'HTTP_X_REAL_IP', 'REMOTE_ADDR'];
 		
+		foreach($headers as $header) {
+			if(!empty($_SERVER[$header])) {
+				$ip = $_SERVER[$header];
+				// Handle comma-separated IPs (X-Forwarded-For)
+				if(str_contains($ip, ',')) {
+					$ip = trim(explode(',', $ip)[0]);
+				}
+				if(filter_var($ip, FILTER_VALIDATE_IP)) {
+					return $ip;
+				}
+			}
+		}
+		
+		return 'unknown';
+	}
+	
+	// IP-based rate limiting
+	function checkRateLimit(string $ip, string $rateLimitDir, int $rateLimitMax, int $rateLimitWindow): array {
+		if(!is_dir($rateLimitDir)) {
+			@mkdir($rateLimitDir, 0755, true);
+		}
+		
+		$ipHash = hash('sha256', $ip);
+		$rateLimitFile = $rateLimitDir . '/' . $ipHash . '.json';
+		$now = time();
+		$requests = [];
+		
+		// Load existing requests
+		if(file_exists($rateLimitFile)) {
+			$data = @file_get_contents($rateLimitFile);
+			if($data !== false) {
+				$requests = json_decode($data, true) ?: [];
+			}
+		}
+		
+		// Filter out old requests outside the window
+		$requests = array_filter($requests, function($timestamp) use ($now, $rateLimitWindow) {
+			return ($now - $timestamp) < $rateLimitWindow;
+		});
+		
+		// Check if rate limited
+		if(count($requests) >= $rateLimitMax) {
+			$oldestRequest = min($requests);
+			$retryAfter = $rateLimitWindow - ($now - $oldestRequest);
+			return ['limited' => true, 'retry_after' => max(1, $retryAfter)];
+		}
+		
+		// Record this request
+		$requests[] = $now;
+		@file_put_contents($rateLimitFile, json_encode(array_values($requests)));
+		
+		return ['limited' => false, 'remaining' => $rateLimitMax - count($requests)];
+	}
+	
+	// Check rate limit
+	$clientIp = getClientIp();
+	$rateLimit = checkRateLimit($clientIp, $rateLimitDir, $rateLimitMax, $rateLimitWindow);
+	
+	if($rateLimit['limited']) {
 		http_response_code(429);
-		header('Retry-After: ' . $retryAfter);
-		echo json_encode(['error' => 'Too many requests. Please wait ' . $retryAfter . ' seconds before trying again.']);
+		header('Retry-After: ' . $rateLimit['retry_after']);
+		echo json_encode(['error' => 'Too many requests. Please wait ' . $rateLimit['retry_after'] . ' seconds before trying again.']);
 		exit;
 	}
 	
-	// Record this request
-	$_SESSION['rate_limit_requests'][] = $now;
-	
-	// Get API key from POST request
-	$apiKey = $_POST['apikey'] ?? '';
-	
-	// Validate API key format (should be 32 hex characters)
-	if(!preg_match('/^[A-Fa-f0-9]{32}$/', $apiKey)) {
-		http_response_code(400);
-		echo json_encode(['error' => 'Invalid Steam API Key format. It should be 32 hexadecimal characters.']);
-		exit;
-	}
+	// Add rate limit headers
+	header('X-RateLimit-Remaining: ' . ($rateLimit['remaining'] ?? 0));
 	
 	// Get Steam ID from POST request
 	$steamId = $_POST['steamid'] ?? '';
@@ -59,9 +101,10 @@
 		exit;
 	}
 	
-	// Generate cache key (hash of steamid + apikey for uniqueness)
-	$cacheKey = hash('sha256', $steamId . $apiKey);
+	// Generate cache key based on Steam ID only (since API key is server-side now)
+	$cacheKey = hash('sha256', $steamId . STEAM_APP_ID);
 	$cacheFile = $cacheDir . '/' . $cacheKey . '.json';
+	$now = time();
 	
 	// Check cache first
 	if(file_exists($cacheFile)) {
@@ -79,10 +122,10 @@
 		}
 	}
 	
-	// Build the Steam API URL
+	// Build the Steam API URL using server-side API key
 	$apiUrl = sprintf(
 		'https://api.steampowered.com/ISteamUserStats/GetUserStatsForGame/v0002/?key=%s&steamid=%s&appid=%s',
-		urlencode($apiKey),
+		urlencode(STEAM_API_KEY),
 		urlencode($steamId),
 		urlencode(STEAM_APP_ID)
 	);
@@ -107,15 +150,11 @@
 	}
 	
 	// Handle Steam API HTTP errors with friendly messages
-	if($httpCode === 401) {
-		http_response_code(401);
-		echo json_encode(['error' => 'Invalid Steam API Key. Please check your key at steamcommunity.com/dev/apikey']);
-		exit;
-	}
-	
-	if($httpCode === 403) {
-		http_response_code(403);
-		echo json_encode(['error' => 'Access denied. Make sure your Steam profile and game details are set to public.']);
+	if($httpCode === 401 || $httpCode === 403) {
+		// Don't expose that it's an API key issue to users
+		http_response_code(500);
+		error_log('Steam API key error: HTTP ' . $httpCode);
+		echo json_encode(['error' => 'Steam API configuration error. Please contact the site administrator.']);
 		exit;
 	}
 	
