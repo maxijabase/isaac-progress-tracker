@@ -1,61 +1,82 @@
-[{
-    "id": 1,
-    "name": "Kill: Mom's Heart"
-}, {
-    "id": 2,
-    "name": "Kill: Isaac"
-}, {
-    "id": 3,
-    "name": "Kill: Satan"
-}, {
-    "id": 4,
-    "name": "Kill: ???"
-}, {
-    "id": 5,
-    "name": "Kill: Lamb"
-}, {
-    "id": 6,
-    "name": "Boss Rush"
-}, {
-    "id": 7,
-    "name": "Challenges"
-}, {
-    "id": 8,
-    "name": "Misc"
-}, {
-    "id": 9,
-    "name": "Kill: Mom"
-}, {
-    "id": 10,
-    "name": "Beat Chapters"
-}, {
-    "id": 11,
-    "name": "Kill: Various Boss"
-}, {
-    "id": 12,
-    "name": "Shop"
-}, {
-    "id": 13,
-    "name": "Kill: Mom's Heart (Hard)"
-}, {
-    "id": 14,
-    "name": "Kill: Hush"
-}, {
-    "id": 15,
-    "name": "Greed Mode"
-}, {
-    "id": 16,
-    "name": "Mega Satan"
-}, {
-    "id": 17,
-    "name": "Hard Mode Completion"
-}, {
-    "id": 18,
-    "name": "Kill: Delirium"
-}, {
-    "id": 19,
-    "name": "Greedier Mode"
-}, {
-    "id": 20,
-    "name": "Repentance"
-}]
+[
+    {
+        "id": 1,
+        "name": "Kill: Mom's Heart"
+    },
+    {
+        "id": 2,
+        "name": "Kill: Isaac"
+    },
+    {
+        "id": 3,
+        "name": "Kill: Satan"
+    },
+    {
+        "id": 4,
+        "name": "Kill: ???"
+    },
+    {
+        "id": 5,
+        "name": "Kill: Lamb"
+    },
+    {
+        "id": 6,
+        "name": "Boss Rush"
+    },
+    {
+        "id": 7,
+        "name": "Challenges"
+    },
+    {
+        "id": 8,
+        "name": "Misc"
+    },
+    {
+        "id": 9,
+        "name": "Kill: Mom"
+    },
+    {
+        "id": 10,
+        "name": "Beat Chapters"
+    },
+    {
+        "id": 11,
+        "name": "Kill: Various Boss"
+    },
+    {
+        "id": 12,
+        "name": "Shop"
+    },
+    {
+        "id": 13,
+        "name": "Kill: Mom's Heart (Hard)"
+    },
+    {
+        "id": 14,
+        "name": "Kill: Hush"
+    },
+    {
+        "id": 15,
+        "name": "Greed Mode"
+    },
+    {
+        "id": 16,
+        "name": "Mega Satan"
+    },
+    {
+        "id": 17,
+        "name": "Hard Mode Completion"
+    },
+    {
+        "id": 18,
+        "name": "Kill: Delirium"
+    },
+    {
+        "id": 19,
+        "name": "Greedier Mode"
+    },
+    {
+        "id": 20,
+        "name": "Repentance"
+    }
+]
