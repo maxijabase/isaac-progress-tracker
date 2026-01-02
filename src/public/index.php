@@ -142,7 +142,7 @@
 					<p>The <strong>Percentage (%)</strong> column shows the percentage of players that have unlocked that achievement.</p>
 					<p class="d-none d-md-block">The <strong>Character</strong> and <strong>Boss</strong> columns show the character or boss required to unlock that achievement.</p>
 					<p>This app is inspired by <a href="https://theriebel.de/tboirah/" class="text-muted" rel="noopener noreferrer nofollow" target="_blank">Rebirth Achievement Helper</a> and uses data from the <a href="https://bindingofisaacrebirth.fandom.com/" class="text-muted" rel="noopener noreferrer nofollow" target="_blank">Rebirth Wiki</a>.</p>
-					<p>Source code is publicly available on <a href="https://github.com/donwilson/isaac-progress-tracker" target="_blank" rel="noopener noreferrer nofollow" class="text-muted fw-bold">GitHub</a>.</p>
+					<p>Source code is publicly available on <a href="https://github.com/maxijabase/isaac-progress-tracker" target="_blank" rel="noopener noreferrer nofollow" class="text-muted fw-bold">GitHub</a>.</p>
 				</div>
 			</div>
 		</div>
