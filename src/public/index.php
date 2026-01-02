@@ -286,9 +286,6 @@
 		// application constants
 		const STORAGE_KEY_PROGRESS = "my-progress";
 		const STORAGE_KEY_STEAM_ID = "steam-id";
-		const STORAGE_KEY_UNLOCKS = "isaac-unlocks";
-		const STORAGE_KEY_DATA_VERSION = "isaac-data-version";
-		const CURRENT_DATA_VERSION = "2026-01-02-v4"; // Update this when unlocks.json changes
 		
 		// function: set loading state for Steam API sync
 		function setLoadingState(isLoading) {
@@ -876,61 +873,25 @@
 		}
 		
 		function load_unlocks_data() {
-			try {
-				update_loading_bar_percent(0);
-				
-				if("undefined" === typeof localStorage) {
-					throw new Error("localStorage is not available");
+			update_loading_bar_percent(0);
+			
+			// Fetch unlocks data from server
+			// HTTP caching (ETag/Last-Modified) handles cache invalidation automatically
+			fetch("./unlocks.json").then(function(response) {
+				if(!response.ok) {
+					throw new Error("Failed to fetch data from server");
 				}
 				
-				// Check if cached data version matches current version
-				const cachedVersion = localStorage.getItem(STORAGE_KEY_DATA_VERSION);
-				if(cachedVersion !== CURRENT_DATA_VERSION) {
-					// Clear old cached data if version mismatch
-					localStorage.removeItem(STORAGE_KEY_UNLOCKS);
-				}
+				update_loading_bar_percent(15);
 				
-				// first attempt to load the unlocks data from localStorage
-				const unlocksData = localStorage.getItem(STORAGE_KEY_UNLOCKS);
+				return response.json();
+			}).then(function(json) {
+				ingest_unlocks_data(json);
+			}).catch(function(error) {
+				console.error(error);
 				
-				if(null !== unlocksData) {
-					update_loading_bar_percent(10);
-					
-					ingest_unlocks_data(JSON.parse(unlocksData));
-					
-					return;
-				}
-				
-				throw new Error("localStorage data is empty");
-			} catch(error) {
-				update_loading_bar_percent(10);
-				
-				// load in the unlocks data from the server (with cache-busting)
-				fetch("./unlocks.json?v=" + CURRENT_DATA_VERSION).then(function(response) {
-					if(!response.ok) {
-						throw new Error("Failed to fetch data from server");
-					}
-					
-					update_loading_bar_percent(15);
-					
-					return response.json();
-				}).then(function(json) {
-					// check if localStorage is available in the browser
-					if("undefined" !== typeof localStorage) {
-						// save the data to localStorage
-						localStorage.setItem(STORAGE_KEY_UNLOCKS, JSON.stringify(json));
-						// save the current data version
-						localStorage.setItem(STORAGE_KEY_DATA_VERSION, CURRENT_DATA_VERSION);
-					}
-					
-					// ingest the data
-					ingest_unlocks_data(json);
-				}).catch(function(error) {
-					console.error(error);
-					
-					showNotification("Failed to load data: " + error.message, "error");
-				});
-			}
+				showNotification("Failed to load data: " + error.message, "error");
+			});
 		}
 		
 		// function: format a number with commas
@@ -1143,6 +1104,12 @@
 		
 		// initialize the app
 		try {
+			// Clean up old localStorage cache (no longer used)
+			if("undefined" !== typeof localStorage) {
+				localStorage.removeItem("isaac-unlocks");
+				localStorage.removeItem("isaac-data-version");
+			}
+			
 			// if the hash is the steam user ID, fetch the progress data
 			if(window.location.hash.match(/^#[0-9]{17}$/)) {
 				const steamId = window.location.hash.substr(1);

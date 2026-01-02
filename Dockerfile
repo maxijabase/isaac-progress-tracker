@@ -20,7 +20,7 @@ RUN docker-php-ext-configure gd --with-freetype --with-jpeg
 RUN docker-php-ext-install -j$(nproc) gd pdo pdo_mysql intl zip mbstring curl
 
 # Enable apache modules
-RUN a2enmod rewrite deflate
+RUN a2enmod rewrite deflate headers
 
 # Set document root to /var/www/html/public
 ENV APACHE_DOCUMENT_ROOT=/var/www/html/public
