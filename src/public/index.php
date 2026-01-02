@@ -34,24 +34,41 @@
 			
 			<span class="navbar-text ms-auto me-3 small d-none d-md-inline-block unlock_progress_text">Loading...</span>
 			
-			<ul class="navbar-nav d-flex flex-row align-items-center">
-				<li class="nav-item me-3 d-none" id="view-toggle-container">
-					<div class="form-check form-switch mb-0">
-						<input class="form-check-input" type="checkbox" role="switch" id="view-toggle" checked>
-						<label class="form-check-label small text-nowrap" for="view-toggle" id="view-toggle-label">My Progress</label>
-					</div>
-				</li>
-				
-				<li class="nav-item d-md-none">
-					<a class="btn btn-primary" href="#" data-bs-toggle="modal" data-bs-target="#steam-id-modal">Sync</a>
-				</li>
-				
-				<li class="nav-item">
-					<a class="btn btn-primary d-none d-md-inline-block" href="#" data-bs-toggle="modal" data-bs-target="#steam-id-modal">
-						Sync Progress
-					</a>
-				</li>
-			</ul>
+		<ul class="navbar-nav d-flex flex-row align-items-center">
+			<li class="nav-item me-3 d-none" id="view-toggle-container">
+				<div class="form-check form-switch mb-0">
+					<input class="form-check-input" type="checkbox" role="switch" id="view-toggle" checked>
+					<label class="form-check-label small text-nowrap" for="view-toggle" id="view-toggle-label">My Progress</label>
+				</div>
+			</li>
+			
+			<!-- Steam Profile (shown when logged in) -->
+			<li class="nav-item me-3 d-none" id="steam-profile-container">
+				<a href="#" class="d-flex align-items-center text-decoration-none" id="steam-profile-link" target="_blank" rel="noopener noreferrer">
+					<img src="" alt="" class="rounded-circle me-2" id="steam-profile-avatar" width="32" height="32">
+					<span class="text-light small d-none d-md-inline" id="steam-profile-name"></span>
+				</a>
+			</li>
+			
+			<!-- Sync button (shown when not logged in) -->
+			<li class="nav-item d-md-none" id="sync-btn-mobile">
+				<a class="btn btn-primary" href="#" data-bs-toggle="modal" data-bs-target="#steam-id-modal">Sync</a>
+			</li>
+			
+			<li class="nav-item" id="sync-btn-desktop">
+				<a class="btn btn-primary d-none d-md-inline-block" href="#" data-bs-toggle="modal" data-bs-target="#steam-id-modal">
+					Sync Progress
+				</a>
+			</li>
+			
+			<!-- Logout button (shown when logged in) -->
+			<li class="nav-item d-none" id="logout-btn-container">
+				<button class="btn btn-outline-secondary btn-sm" id="logout-btn" title="Logout">
+					<span class="d-none d-md-inline">Logout</span>
+					<span class="d-md-none">×</span>
+				</button>
+			</li>
+		</ul>
 		</div>
 	</nav>
 	
@@ -151,30 +168,39 @@
 	<!-- bootstrap modal form: set up a modal form for the user to input their Steam ID -->
 	<div class="modal fade" id="steam-id-modal" tabindex="-1" aria-labelledby="steam-id-modal-label" aria-hidden="true">
 		<div class="modal-dialog modal-lg modal-dialog-centered">
-			<form action="#" method="get" class="modal-content">
+			<div class="modal-content">
 				<div class="modal-header">
 					<h5 class="modal-title" id="steam-id-modal-label">Sync Progress</h5>
 					<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
 				</div>
 				<div class="modal-body">
-					<div class="mb-3">
-						<label for="steam-id" class="form-label">Steam ID</label>
-						<input type="text" class="form-control" id="steam-id" name="steam-id" required placeholder="Example: 12345678901234567">
-						<small class="text-muted">You can find your Steam ID by using <a href="https://www.steamidfinder.com/" rel="noopener noreferrer nofollow" target="_blank">SteamID Finder</a>. You're looking for the <strong>"steamID64 (Dec)"</strong> number, it should be 17 characters long.</small>
+					<!-- Steam Login Button -->
+					<div class="text-center mb-4">
+						<a href="./api/steam-login.php" class="btn btn-dark btn-lg px-4">
+							<img src="https://community.akamai.steamstatic.com/public/images/signinthroughsteam/sits_01.png" alt="Sign in through Steam" style="height: 30px;">
+						</a>
+						<p class="text-muted small mt-2 mb-0">Recommended - securely login with your Steam account</p>
 					</div>
 					
-					<div class="mt-3">
-						<small class="text-muted">This automated progress tracker only works with the Steam version of <a href="https://store.steampowered.com/app/250900/" rel="noopener noreferrer nofollow" target="_blank">The Binding of Isaac: Rebirth</a>.</small>
-					</div>
+					<hr class="my-4">
+					
+					<!-- Manual Steam ID input (fallback) -->
+					<div class="text-muted small mb-2">Or enter your Steam ID manually:</div>
+					<form action="#" method="get" id="steam-id-form">
+						<div class="mb-3">
+							<div class="input-group">
+								<input type="text" class="form-control" id="steam-id" name="steam-id" placeholder="Example: 12345678901234567">
+								<button type="submit" class="btn btn-outline-primary">Sync</button>
+							</div>
+							<small class="text-muted">Find your Steam ID at <a href="https://www.steamidfinder.com/" rel="noopener noreferrer nofollow" target="_blank">SteamID Finder</a> (use "steamID64 (Dec)").</small>
+						</div>
+					</form>
 					
 					<div class="mt-3">
-						<small class="text-muted">If you're having issues syncing your unlocks, make sure your profile is <a href="https://help.steampowered.com/en/faqs/view/588C-C67D-0251-C276" rel="noopener noreferrer nofollow" target="_blank">set to public</a>.</small>
+						<small class="text-muted">This tracker only works with the Steam version of <a href="https://store.steampowered.com/app/250900/" rel="noopener noreferrer nofollow" target="_blank">The Binding of Isaac: Rebirth</a>. Your profile must be <a href="https://help.steampowered.com/en/faqs/view/588C-C67D-0251-C276" rel="noopener noreferrer nofollow" target="_blank">set to public</a>.</small>
 					</div>
 				</div>
-				<div class="modal-footer">
-					<button type="submit" class="btn btn-primary">Update</button>
-				</div>
-			</form>
+			</div>
 		</div>
 	</div>
 	
@@ -286,6 +312,7 @@
 		// application constants
 		const STORAGE_KEY_PROGRESS = "my-progress";
 		const STORAGE_KEY_STEAM_ID = "steam-id";
+		const STORAGE_KEY_PROFILE = "steam-profile";
 		
 		// function: set loading state for Steam API sync
 		function setLoadingState(isLoading) {
@@ -1068,8 +1095,89 @@
 				});
 		}
 		
+		// function: fetch and store steam profile
+		function fetch_steam_profile(steamId) {
+			fetch("./api/steam-profile.php", {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/x-www-form-urlencoded",
+				},
+				body: "steamid=" + encodeURIComponent(steamId)
+			})
+			.then(function(response) {
+				if(!response.ok) {
+					throw new Error("Failed to fetch profile");
+				}
+				return response.json();
+			})
+			.then(function(profile) {
+				if(profile.error) {
+					throw new Error(profile.error);
+				}
+				
+				// save profile to localStorage
+				if("undefined" !== typeof localStorage) {
+					localStorage.setItem(STORAGE_KEY_PROFILE, JSON.stringify(profile));
+				}
+				
+				// update the navbar
+				update_navbar_profile(profile);
+			})
+			.catch(function(error) {
+				console.error("Failed to fetch Steam profile:", error);
+			});
+		}
+		
+		// function: update navbar with profile info
+		function update_navbar_profile(profile) {
+			if(!profile) {
+				// Hide profile, show sync buttons
+				document.getElementById("steam-profile-container").classList.add("d-none");
+				document.getElementById("logout-btn-container").classList.add("d-none");
+				document.getElementById("sync-btn-mobile").classList.remove("d-none");
+				document.getElementById("sync-btn-desktop").classList.remove("d-none");
+				return;
+			}
+			
+			// Update profile elements
+			document.getElementById("steam-profile-avatar").src = profile.avatarmedium || profile.avatar;
+			document.getElementById("steam-profile-avatar").alt = profile.personaname;
+			document.getElementById("steam-profile-name").textContent = profile.personaname;
+			document.getElementById("steam-profile-link").href = profile.profileurl;
+			
+			// Show profile, hide sync buttons
+			document.getElementById("steam-profile-container").classList.remove("d-none");
+			document.getElementById("logout-btn-container").classList.remove("d-none");
+			document.getElementById("sync-btn-mobile").classList.add("d-none");
+			document.getElementById("sync-btn-desktop").classList.add("d-none");
+		}
+		
+		// function: logout - clear stored data
+		function logout() {
+			if("undefined" !== typeof localStorage) {
+				localStorage.removeItem(STORAGE_KEY_STEAM_ID);
+				localStorage.removeItem(STORAGE_KEY_PROGRESS);
+				localStorage.removeItem(STORAGE_KEY_PROFILE);
+			}
+			
+			// Clear URL hash
+			window.location.hash = "";
+			
+			// Reset UI
+			window.my_progress = {};
+			update_navbar_profile(null);
+			update_my_progress();
+			
+			showNotification("Logged out successfully", "success");
+		}
+		
+		// event: logout button click
+		document.getElementById("logout-btn").addEventListener("click", function() {
+			logout();
+		});
+		
 		// event: form submit, save the inputs to localStorage
-		document.querySelector("form").addEventListener("submit", function(event) {
+		document.getElementById("steam-id-form").addEventListener("submit", function(event) {
 			// prevent the form from submitting
 			event.preventDefault();
 			
@@ -1110,6 +1218,17 @@
 				localStorage.removeItem("isaac-data-version");
 			}
 			
+			// Check for Steam login errors in URL
+			const urlParams = new URLSearchParams(window.location.search);
+			if(urlParams.get('error') === 'steam_login_failed') {
+				showNotification("Steam login failed. Please try again or enter your Steam ID manually.", "error");
+				// Clean up URL
+				window.history.replaceState({}, document.title, window.location.pathname);
+			} else if(urlParams.get('error') === 'steam_login_error') {
+				showNotification("An error occurred during Steam login. Please try again.", "error");
+				window.history.replaceState({}, document.title, window.location.pathname);
+			}
+			
 			// if the hash is the steam user ID, fetch the progress data
 			if(window.location.hash.match(/^#[0-9]{17}$/)) {
 				const steamId = window.location.hash.substr(1);
@@ -1118,13 +1237,14 @@
 					localStorage.setItem(STORAGE_KEY_STEAM_ID, steamId);
 				}
 				
-				// fetch the progress data
+				// fetch the progress data and profile
 				fetch_steam_user_progress(steamId);
+				fetch_steam_profile(steamId);
 			}
 			
 			load_unlocks_data();
 			
-			// load the progress data from localStorage (if available)
+			// load the progress data and profile from localStorage (if available)
 			if("undefined" !== typeof localStorage) {
 				const myProgress = localStorage.getItem(STORAGE_KEY_PROGRESS) || null;
 				
@@ -1132,6 +1252,17 @@
 					window.my_progress = JSON.parse(myProgress);
 					
 					update_my_progress();
+				}
+				
+				// load profile from localStorage
+				const storedProfile = localStorage.getItem(STORAGE_KEY_PROFILE) || null;
+				
+				if(null !== storedProfile) {
+					try {
+						update_navbar_profile(JSON.parse(storedProfile));
+					} catch(e) {
+						console.error("Failed to parse stored profile:", e);
+					}
 				}
 			}
 		} catch(error) {

@@ -1,0 +1,9 @@
+{
+    "name": "maxijabase/isaac-progress-tracker",
+    "description": "Binding of Isaac achievement progress tracker",
+    "require": {
+        "php": ">=8.2",
+        "xpaw/steam-openid": "^3.1"
+    }
+}
+

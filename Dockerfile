@@ -19,6 +19,9 @@ RUN apt-get update && apt-get install -y \
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg
 RUN docker-php-ext-install -j$(nproc) gd pdo pdo_mysql intl zip mbstring curl
 
+# Install Composer
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+
 # Enable apache modules
 RUN a2enmod rewrite deflate headers
 
@@ -35,6 +38,13 @@ COPY .docker/apache-php83/vhost.conf /etc/apache2/sites-available/000-default.co
 # Copy PHP config
 COPY .docker/apache-php83/php.ini /usr/local/etc/php/php.ini
 
+# Copy composer files first for better caching
+COPY src/composer.json /var/www/html/
+
+# Install composer dependencies
+WORKDIR /var/www/html
+RUN composer install --no-dev --optimize-autoloader
+
 # Copy application source code
 COPY src/ /var/www/html/
 
@@ -49,4 +59,3 @@ EXPOSE 80
 
 # Start Apache
 CMD ["apache2-foreground"]
-

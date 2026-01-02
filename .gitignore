@@ -14,5 +14,9 @@ src/config.sensitive.php
 
 # Release builds
 src/release/
-*.ps1
+
+# Environment
 .env
+
+# Composer
+src/vendor/
